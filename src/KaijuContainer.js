@@ -11,19 +11,72 @@ import * as requests from './requests'
 class KaijuContainer extends React.Component {
 
   state = {
-    kaijus: []
+    kaijus: [],
+    form: false
+  }
+
+  componentDidMount() {
+    requests.fetchKaijus()
+    .then(kaijus => this.setState({ kaijus: kaijus }))
+  }
+
+  toggleForm = () => {
+    this.setState(prevState => ({
+      form: !prevState.form
+    }))
+  }
+
+  deleteKaiju = (id) => {
+    fetch(`http://localhost:3000/kaijus/${id}`, 
+    { method: 'DELETE'})
+    .then(r => r.json())
+    .then(this.removeFromState(id)) 
+  }
+
+  removeFromState = (id) => {
+    const filtered = this.state.kaijus.filter(k => k.id !== id)
+    this.setState({
+      kaijus: filtered
+    })
+  }
+
+  addKaiju = (newKaiju) => {
+    const config = {
+      method: "POST",
+      headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+      },
+      body: JSON.stringify(newKaiju)
+    }
+    fetch('http://localhost:3000/kaijus', config)
+    .then(r => r.json())
+    .then(kaiju =>  this.setState({kaijus: [...this.state.kaijus, kaiju]}))
+  }
+
+  editKaiju = (updatedKaiju) => {
+    const updatedKaijus = this.state.kaijus.map(k => {
+      if (updatedKaiju.id === k .id) {
+        return updatedKaiju
+      }
+      else {
+        return k
+      }
+    })
+    this.setState({
+      kaijus: updatedKaijus
+    })
   }
 
   render() {
     return (
       <>
 
-        <CreateKaijuForm />
+        {this.state.form ? <CreateKaijuForm addKaiju={this.addKaiju}/> : null}
+        <button onClick={this.toggleForm}>kaiju form</button>
 
         <div id='kaiju-container'>
-
-          {/* Kaiju cards should go in here! */}
-
+          {this.state.kaijus.map(k => <KaijuCard editKaiju={this.editKaiju} deleteKaiju={this.deleteKaiju} key={k.id} kaiju={k}/>)}
         </div>
 
 
